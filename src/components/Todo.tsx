@@ -8,9 +8,10 @@ interface Props {
   todo: TodoType;
   onRemove: () => void;
   onUpdate: (title?: string, timeLeft?: number) => void;
+  onToggleCompleted: () => void;
 }
 
-export default function Todo({ todo, onRemove, onUpdate }: Props) {
+export default function Todo({ todo, onRemove, onUpdate, onToggleCompleted }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
   const [editDate, setEditDate] = useState(() => {
@@ -73,17 +74,10 @@ export default function Todo({ todo, onRemove, onUpdate }: Props) {
     }
   };
 
-  const getTimeLeftText = (timeLeft: number) => {
-    if (timeLeft < 0) {
-      return `${Math.abs(timeLeft)}일 지남`;
-    } else if (timeLeft === 0) {
-      return '오늘';
-    } else {
-      return `${timeLeft}일 남음`;
+  const getBarColor = (timeLeft: number, completed: boolean) => {
+    if (completed) {
+      return '#888'; // 회색 - 완료됨
     }
-  };
-
-  const getTimeLeftColor = (timeLeft: number) => {
     if (timeLeft < 0) {
       return '#d32f2f'; // 빨간색 - 지난 일
     } else if (timeLeft === 0) {
@@ -93,6 +87,74 @@ export default function Todo({ todo, onRemove, onUpdate }: Props) {
     } else {
       return '#388e3c'; // 초록색 - 여유있음
     }
+  };
+
+  const renderTimeBar = () => {
+    const maxBars = 21; // 3주
+    const timeLeft = todo.timeLeft;
+    
+    // 완료된 경우 모든 바를 회색으로
+    if (todo.completed) {
+      const bars = [];
+      for (let i = 0; i < maxBars; i++) {
+        bars.push(
+          <View
+            key={i}
+            style={[
+              styles.bar,
+              { backgroundColor: '#d0d0d0' },
+            ]}
+          />
+        );
+      }
+      return (
+        <View style={styles.barContainer}>
+          <View style={styles.barsWrapper}>
+            {bars}
+          </View>
+        </View>
+      );
+    }
+    
+    // 바의 개수 계산 (최대 21개)
+    let barCount = Math.min(Math.max(timeLeft, 0), maxBars);
+    
+    // 지난 날짜인 경우 0개
+    if (timeLeft < 0) {
+      barCount = 0;
+    }
+    
+    const bars = [];
+    
+    for (let i = 0; i < maxBars; i++) {
+      const isActive = i < barCount;
+      bars.push(
+        <View
+          key={i}
+          style={[
+            styles.bar,
+            {
+              backgroundColor: isActive ? getBarColor(timeLeft, todo.completed) : '#e0e0e0',
+            },
+          ]}
+        />
+      );
+    }
+    
+    return (
+      <View style={styles.barContainer}>
+        <View style={styles.barsWrapper}>
+          {bars}
+        </View>
+      </View>
+    );
+  };
+
+  const truncateTitle = (title: string, maxLength: number = 10) => {
+    if (title.length <= maxLength) {
+      return title;
+    }
+    return title.substring(0, maxLength) + '...';
   };
 
   if (isEditing) {
@@ -135,22 +197,35 @@ export default function Todo({ todo, onRemove, onUpdate }: Props) {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>{todo.title}</Text>
-        <Text style={[styles.timeLeft, { color: getTimeLeftColor(todo.timeLeft) }]}>
-          {getTimeLeftText(todo.timeLeft)}
+    <View style={[styles.container, todo.completed && styles.completedContainer]}>
+      {/* 상단 헤더 */}
+      <View style={styles.header}>
+        {/* 체크박스 */}
+        <TouchableOpacity 
+          style={[styles.checkbox, todo.completed && styles.checkboxCompleted]}
+          onPress={onToggleCompleted}
+        >
+          {todo.completed && (
+            <Text style={styles.checkmark}>✓</Text>
+          )}
+        </TouchableOpacity>
+        
+        <Text style={[styles.title, todo.completed && styles.completedTitle]}>
+          {truncateTitle(todo.title)}
         </Text>
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
+            <Text style={styles.editButtonText}>수정</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
+            <Text style={styles.removeButtonText}>삭제</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
-          <Text style={styles.editButtonText}>수정</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.removeButton} onPress={handleRemove}>
-          <Text style={styles.removeButtonText}>삭제</Text>
-        </TouchableOpacity>
-      </View>
+      {/* 체력바 스타일 시간 표시 */}
+      {renderTimeBar()}
     </View>
   );
 }
@@ -158,33 +233,62 @@ export default function Todo({ todo, onRemove, onUpdate }: Props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 8,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e9ecef',
-    flexDirection: 'row',
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  completedContainer: {
+    backgroundColor: '#f8f9fa',
+    opacity: 0.7,
   },
   editingContainer: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
+    padding: 16,
   },
-  content: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  checkboxCompleted: {
+    backgroundColor: '#388e3c',
+    borderColor: '#388e3c',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 4,
-  },
-  timeLeft: {
-    fontSize: 14,
     fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  completedTitle: {
+    textDecorationLine: 'line-through',
+    color: '#888',
   },
   buttonContainer: {
     flexDirection: 'row',
+    marginLeft: 12,
   },
   editButton: {
     marginRight: 8,
@@ -196,6 +300,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: '#666',
     fontSize: 12,
+    fontWeight: '500',
   },
   removeButton: {
     paddingVertical: 6,
@@ -206,6 +311,23 @@ const styles = StyleSheet.create({
   removeButtonText: {
     color: '#d32f2f',
     fontSize: 12,
+    fontWeight: '500',
+  },
+  barContainer: {
+    marginTop: 4,
+  },
+  barsWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 2,
+  },
+  bar: {
+    width: 10,
+    height: 16,
+    borderRadius: 3,
+    marginHorizontal: 1,
   },
   editInput: {
     borderWidth: 1,

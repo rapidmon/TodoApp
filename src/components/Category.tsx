@@ -12,6 +12,8 @@ interface Props {
   onAddTodo: (categoryId: string, title: string, timeLeft: number) => void;
   onRemoveTodo: (categoryId: string, todoId: string) => void;
   onUpdateTodo: (categoryId: string, todoId: string, title?: string, timeLeft?: number) => void;
+  onToggleTodoCompleted: (categoryId: string, todoId: string) => void;
+  onRemoveCompletedTodos: (categoryId: string) => void;
 }
 
 export default function Category({ 
@@ -20,7 +22,9 @@ export default function Category({
   onUpdateCategory, 
   onAddTodo, 
   onRemoveTodo, 
-  onUpdateTodo 
+  onUpdateTodo,
+  onToggleTodoCompleted,
+  onRemoveCompletedTodos
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(category.name);
@@ -80,6 +84,14 @@ export default function Category({
           <>
             <Text style={styles.title}>{category.name}</Text>
             <View style={styles.buttonContainer}>
+              {category.todos.some(todo => todo.completed) && (
+                <TouchableOpacity 
+                  style={styles.clearCompletedButton} 
+                  onPress={() => onRemoveCompletedTodos(category.id)}
+                >
+                  <Text style={styles.clearCompletedButtonText}>완료 삭제</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
                 <Text style={styles.editButtonText}>수정</Text>
               </TouchableOpacity>
@@ -106,6 +118,7 @@ export default function Category({
                 todo={todo}
                 onRemove={() => onRemoveTodo(category.id, todo.id)}
                 onUpdate={(title, timeLeft) => onUpdateTodo(category.id, todo.id, title, timeLeft)}
+                onToggleCompleted={() => onToggleTodoCompleted(category.id, todo.id)}
               />
             ))
           )}
@@ -149,6 +162,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearCompletedButton: {
+    marginRight: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#e8f5e8',
+    borderRadius: 6,
+  },
+  clearCompletedButtonText: {
+    color: '#388e3c',
+    fontSize: 12,
+    fontWeight: '500',
   },
   editButton: {
     marginRight: 8,

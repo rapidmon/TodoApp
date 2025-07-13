@@ -27,7 +27,9 @@ export function reducer(state: State, action: Action): State {
         case 'UPDATE_CATEGORY': {
             return {
                 ...state,
-                categories: state.categories.map(c => c.id === action.payload.categoryId ? { ...c, ...action.payload} : c),
+                categories: state.categories.map(c => 
+                    c.id === action.payload.categoryId ? { ...c, name: action.payload.name } : c
+                ),
             };
         }
         case 'ADD_TODO': {
@@ -43,6 +45,7 @@ export function reducer(state: State, action: Action): State {
                             id: Date.now().toString(),
                             title: action.payload.title,
                             timeLeft: action.payload.timeLeft,
+                            completed: false, // 기본값은 미완료
                         } as Todo,
                         ],
                     }
@@ -73,6 +76,33 @@ export function reducer(state: State, action: Action): State {
                             : t
                         ),
                     }
+                    : c
+                ),
+            };
+        }
+        case 'TOGGLE_TODO_COMPLETED': {
+            return {
+                ...state,
+                categories: state.categories.map(c =>
+                c.id === action.payload.categoryId
+                    ? {
+                        ...c,
+                        todos: c.todos.map(t =>
+                        t.id === action.payload.todoId
+                            ? { ...t, completed: !t.completed }
+                            : t
+                        ),
+                    }
+                    : c
+                ),
+            };
+        }
+        case 'REMOVE_COMPLETED_TODOS': {
+            return {
+                ...state,
+                categories: state.categories.map(c =>
+                c.id === action.payload.categoryId
+                    ? { ...c, todos: c.todos.filter(t => !t.completed) }
                     : c
                 ),
             };

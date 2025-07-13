@@ -3,11 +3,13 @@ import React, { useReducer } from 'react';
 import { View, StyleSheet, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { reducer, initialState } from '../state/reducer';
+import { useWidgetUpdate } from '../hooks/useWidgetUpdate';
 import AddCategory from '../components/AddCategory';
 import Category from '../components/Category';
 
 export default function HomeScreen() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  useWidgetUpdate(state);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -32,6 +34,8 @@ export default function HomeScreen() {
               onAddTodo={(categoryId, title, timeLeft) => dispatch({ type: 'ADD_TODO', payload: { categoryId, title, timeLeft } })}
               onRemoveTodo={(categoryId, todoId) => dispatch({ type: 'REMOVE_TODO', payload: { categoryId, todoId } })}
               onUpdateTodo={(categoryId, todoId, title, timeLeft) => dispatch({ type: 'UPDATE_TODO', payload: { categoryId, todoId, title, timeLeft } })}
+              onToggleTodoCompleted={(categoryId, todoId) => dispatch({ type: 'TOGGLE_TODO_COMPLETED', payload: { categoryId, todoId } })}
+              onRemoveCompletedTodos={(categoryId) => dispatch({ type: 'REMOVE_COMPLETED_TODOS', payload: { categoryId } })}
             />
           ))
         )}
