@@ -1,37 +1,50 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# 📦 Node.js
 node_modules/
+npm-debug.*
+yarn-error.log
 
-# Expo
+# 🚀 Expo
 .expo/
 dist/
 web-build/
-expo-env.d.ts
-
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
 .metro-health-check*
 
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
+# 🤖 Android Build (크기가 큰 폴더들)
+android/build/
+android/.gradle/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/.externalNativeBuild/
+android/.cxx/
 
-# macOS
+# 📱 Android 결과물
+*.apk
+*.aab
+android/app/release/
+android/app/debug/
+
+# 🔐 보안 파일들 (절대 업로드 금지!)
+android/keystores/
+*.keystore
+*.jks
+android/app/my-upload-key.keystore
+
+# 🖼️ 임시/테스트 파일들
+*.zip
+*.tar.gz
+*.rar
+forecast.*
+temp/
+test-files/
+
+# 💻 시스템 파일
 .DS_Store
-*.pem
+Thumbs.db
+.vscode/
+.idea/
 
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
+# 📊 로그
+*.log
+logs/
