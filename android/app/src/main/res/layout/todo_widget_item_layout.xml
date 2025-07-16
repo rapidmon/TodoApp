@@ -54,33 +54,33 @@
 
     </LinearLayout>
 
-    <!-- 오른쪽: 버튼들 -->
+    <!-- 오른쪽: 버튼들 (가로 배치) -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:layout_marginStart="8dp"
         android:gravity="center">
 
         <!-- 완료 버튼 -->
         <Button
             android:id="@+id/btn_complete"
-            android:layout_width="56dp"
-            android:layout_height="28dp"
+            android:layout_width="48dp"
+            android:layout_height="32dp"
             android:text="완료"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textColor="#FFFFFF"
             android:background="@drawable/complete_button_background"
-            android:layout_marginBottom="4dp"
+            android:layout_marginEnd="4dp"
             style="?android:attr/borderlessButtonStyle" />
 
         <!-- 삭제 버튼 -->
         <Button
             android:id="@+id/btn_delete"
-            android:layout_width="56dp"
-            android:layout_height="28dp"
+            android:layout_width="48dp"
+            android:layout_height="32dp"
             android:text="삭제"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textColor="#FFFFFF"
             android:background="@drawable/delete_button_background"
             style="?android:attr/borderlessButtonStyle" />
