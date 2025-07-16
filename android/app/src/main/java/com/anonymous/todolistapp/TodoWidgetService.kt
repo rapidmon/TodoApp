@@ -65,6 +65,7 @@ class TodoRemoteViewsFactory(
         val views = RemoteViews(context.packageName, R.layout.todo_widget_item_layout)
 
         try {
+            val todoId = todo.getString("id")
             val title = todo.getString("title")
             val timeLeft = todo.getInt("timeLeft")
             val completed = todo.getBoolean("completed")
@@ -83,15 +84,37 @@ class TodoRemoteViewsFactory(
             if (completed) {
                 views.setInt(R.id.todo_title, "setTextColor", Color.GRAY)
                 views.setInt(R.id.time_text, "setTextColor", Color.GRAY)
+                views.setTextViewText(R.id.btn_complete, "취소")
             } else {
                 views.setInt(R.id.todo_title, "setTextColor", Color.BLACK)
                 views.setInt(R.id.time_text, "setTextColor", getTextColor(timeLeft))
+                views.setTextViewText(R.id.btn_complete, "완료")
             }
             
-            // 클릭 시 앱 열기를 위한 인텐트 설정
-            val fillInIntent = Intent()
-            fillInIntent.putExtra("todoId", todo.getString("id"))
-            views.setOnClickFillInIntent(R.id.todo_title, fillInIntent)
+            // 완료 버튼 클릭 인텐트
+            val categoryId = if (todo.has("categoryId")) {
+                todo.getString("categoryId")
+            } else {
+                "default"
+            }
+            
+            val completeIntent = Intent()
+            completeIntent.action = "com.anonymous.todolistapp.ACTION_COMPLETE_TODO"
+            completeIntent.putExtra("todo_id", todoId)
+            completeIntent.putExtra("category_id", categoryId)
+            views.setOnClickFillInIntent(R.id.btn_complete, completeIntent)
+            
+            // 삭제 버튼 클릭 인텐트
+            val deleteIntent = Intent()
+            deleteIntent.action = "com.anonymous.todolistapp.ACTION_DELETE_TODO"
+            deleteIntent.putExtra("todo_id", todoId)
+            deleteIntent.putExtra("category_id", categoryId)
+            views.setOnClickFillInIntent(R.id.btn_delete, deleteIntent)
+            
+            // 할 일 제목 클릭 시 앱 열기
+            val appIntent = Intent()
+            appIntent.putExtra("todoId", todoId)
+            views.setOnClickFillInIntent(R.id.todo_title, appIntent)
             
         } catch (e: Exception) {
             Log.e(TAG, "Error creating view for position $position: ${e.message}")

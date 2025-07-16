@@ -17,6 +17,12 @@ class TodoWidgetProvider : AppWidgetProvider() {
         private const val TAG = "TodoWidget"
         private const val MAX_BARS = 21 // 3주
         
+        // 버튼 액션들
+        private const val ACTION_COMPLETE_TODO = "com.anonymous.todolistapp.ACTION_COMPLETE_TODO"
+        private const val ACTION_DELETE_TODO = "com.anonymous.todolistapp.ACTION_DELETE_TODO"
+        private const val EXTRA_TODO_ID = "todo_id"
+        private const val EXTRA_CATEGORY_ID = "category_id"
+        
         fun updateWidgetData(context: Context, todos: JSONArray) {
             Log.d(TAG, "updateWidgetData called with ${todos.length()} todos")
             
@@ -51,15 +57,13 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 // 빈 뷰 설정
                 views.setEmptyView(R.id.todo_list, android.R.id.empty)
                 
-                // 클릭 시 앱 열기를 위한 인텐트 설정
-                val appIntent = Intent(context, MainActivity::class.java)
-                appIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                
-                val pendingIntent = android.app.PendingIntent.getActivity(
-                    context, 0, appIntent, 
-                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+                // 버튼 클릭을 위한 인텐트 템플릿 설정
+                val buttonIntent = Intent(context, TodoWidgetProvider::class.java)
+                val buttonPendingIntent = android.app.PendingIntent.getBroadcast(
+                    context, 0, buttonIntent, 
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
                 )
-                views.setPendingIntentTemplate(R.id.todo_list, pendingIntent)
+                views.setPendingIntentTemplate(R.id.todo_list, buttonPendingIntent)
                 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
                 Log.d(TAG, "Widget updated successfully")
@@ -88,11 +92,126 @@ class TodoWidgetProvider : AppWidgetProvider() {
         }
     }
     
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        Log.d(TAG, "onUpdate called with ${appWidgetIds.size} widgets")
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
         
-        for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+        when (intent.action) {
+            ACTION_COMPLETE_TODO -> {
+                val todoId = intent.getStringExtra(EXTRA_TODO_ID)
+                val categoryId = intent.getStringExtra(EXTRA_CATEGORY_ID)
+                if (todoId != null && categoryId != null) {
+                    handleCompleteTodo(context, categoryId, todoId)
+                }
+            }
+            ACTION_DELETE_TODO -> {
+                val todoId = intent.getStringExtra(EXTRA_TODO_ID)
+                val categoryId = intent.getStringExtra(EXTRA_CATEGORY_ID)
+                if (todoId != null && categoryId != null) {
+                    handleDeleteTodo(context, categoryId, todoId)
+                }
+            }
+        }
+    }
+    
+    private fun handleCompleteTodo(context: Context, categoryId: String, todoId: String) {
+        try {
+            // SharedPreferences에서 데이터 로드
+            val prefs = context.getSharedPreferences("TodoWidgetPrefs", Context.MODE_PRIVATE)
+            val todosJson = prefs.getString("todos", "[]") ?: "[]"
+            val todos = JSONArray(todosJson)
+            
+            // 해당 할 일 찾아서 완료 토글
+            var found = false
+            for (i in 0 until todos.length()) {
+                val todo = todos.getJSONObject(i)
+                if (todo.getString("id") == todoId) {
+                    val currentCompleted = todo.getBoolean("completed")
+                    todo.put("completed", !currentCompleted)
+                    found = true
+                    
+                    // 위젯 변경사항 기록
+                    recordWidgetChange(context, "TOGGLE_COMPLETED", categoryId, todoId)
+                    break
+                }
+            }
+            
+            if (found) {
+                // SharedPreferences에 저장
+                prefs.edit().apply {
+                    putString("todos", todos.toString())
+                    apply()
+                }
+                
+                // 위젯 업데이트
+                updateWidgetData(context, todos)
+                
+                Log.d(TAG, "Todo completed: $todoId")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error completing todo: ${e.message}", e)
+        }
+    }
+    
+    private fun handleDeleteTodo(context: Context, categoryId: String, todoId: String) {
+        try {
+            // SharedPreferences에서 데이터 로드
+            val prefs = context.getSharedPreferences("TodoWidgetPrefs", Context.MODE_PRIVATE)
+            val todosJson = prefs.getString("todos", "[]") ?: "[]"
+            val todos = JSONArray(todosJson)
+            
+            // 해당 할 일 찾아서 삭제
+            var foundIndex = -1
+            for (i in 0 until todos.length()) {
+                val todo = todos.getJSONObject(i)
+                if (todo.getString("id") == todoId) {
+                    foundIndex = i
+                    break
+                }
+            }
+            
+            if (foundIndex != -1) {
+                todos.remove(foundIndex)
+                
+                // SharedPreferences에 저장
+                prefs.edit().apply {
+                    putString("todos", todos.toString())
+                    apply()
+                }
+                
+                // 위젯 변경사항 기록
+                recordWidgetChange(context, "DELETE", categoryId, todoId)
+                
+                // 위젯 업데이트
+                updateWidgetData(context, todos)
+                
+                Log.d(TAG, "Todo deleted: $todoId")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting todo: ${e.message}", e)
+        }
+    }
+    
+    private fun recordWidgetChange(context: Context, action: String, categoryId: String, todoId: String) {
+        try {
+            val prefs = context.getSharedPreferences("TodoWidgetPrefs", Context.MODE_PRIVATE)
+            val existingChanges = prefs.getString("widgetChanges", "[]") ?: "[]"
+            val changes = JSONArray(existingChanges)
+            
+            val change = JSONObject().apply {
+                put("action", action)
+                put("categoryId", categoryId)
+                put("todoId", todoId)
+                put("timestamp", System.currentTimeMillis())
+            }
+            
+            changes.put(change)
+            
+            prefs.edit().apply {
+                putString("widgetChanges", changes.toString())
+                apply()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error recording widget change: ${e.message}", e)
         }
     }
     

@@ -1,0 +1,5 @@
+<!-- android/app/src/main/res/drawable/complete_button_background.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#388e3c" />
+    <corners android:radius="6dp" />
+</shape>

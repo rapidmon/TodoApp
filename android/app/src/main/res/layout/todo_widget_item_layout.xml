@@ -2,46 +2,89 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:background="@drawable/widget_item_background"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:gravity="center_vertical">
 
-    <!-- 할 일 제목 + 날짜 -->
+    <!-- 왼쪽: 할 일 정보 -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/todo_title"
-            android:layout_width="0dp"
+        <!-- 할 일 제목 + 날짜 -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="할 일 제목"
-            android:textSize="13sp"
-            android:textColor="#333333"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
 
-        <TextView
-            android:id="@+id/time_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3일 남음"
-            android:textSize="11sp"
-            android:textColor="#666666"
-            android:layout_marginStart="8dp" />
+            <TextView
+                android:id="@+id/todo_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="할 일 제목"
+                android:textSize="13sp"
+                android:textColor="#333333"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/time_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3일 남음"
+                android:textSize="11sp"
+                android:textColor="#666666"
+                android:layout_marginStart="8dp" />
+
+        </LinearLayout>
+
+        <!-- 체력바 -->
+        <ImageView
+            android:id="@+id/health_bar"
+            android:layout_width="match_parent"
+            android:layout_height="12dp"
+            android:scaleType="fitStart" />
 
     </LinearLayout>
 
-    <!-- 체력바 -->
-    <ImageView
-        android:id="@+id/health_bar"
-        android:layout_width="match_parent"
-        android:layout_height="12dp"
-        android:scaleType="fitStart" />
+    <!-- 오른쪽: 버튼들 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginStart="8dp"
+        android:gravity="center">
+
+        <!-- 완료 버튼 -->
+        <Button
+            android:id="@+id/btn_complete"
+            android:layout_width="56dp"
+            android:layout_height="28dp"
+            android:text="완료"
+            android:textSize="10sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/complete_button_background"
+            android:layout_marginBottom="4dp"
+            style="?android:attr/borderlessButtonStyle" />
+
+        <!-- 삭제 버튼 -->
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="56dp"
+            android:layout_height="28dp"
+            android:text="삭제"
+            android:textSize="10sp"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/delete_button_background"
+            style="?android:attr/borderlessButtonStyle" />
+
+    </LinearLayout>
 
 </LinearLayout>

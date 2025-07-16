@@ -9,7 +9,7 @@ import Category from '../components/Category';
 
 export default function HomeScreen() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  useWidgetUpdate(state);
+  useWidgetUpdate(state, dispatch);
 
   return (
     <SafeAreaView style={styles.container}>
