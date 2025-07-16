@@ -29,7 +29,7 @@
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
-    <!-- 🆕 위젯 리시버 추가 (application 태그 안에!) -->
+    <!-- 🆕 위젯 리시버 -->
     <receiver android:name=".TodoWidgetProvider"
         android:exported="true">
         <intent-filter>
@@ -38,5 +38,10 @@
         <meta-data android:name="android.appwidget.provider"
             android:resource="@xml/todo_widget_info" />
     </receiver>
+    
+    <!-- 🆕 위젯 서비스 추가 -->
+    <service android:name=".TodoWidgetService"
+        android:permission="android.permission.BIND_REMOTEVIEWS"
+        android:exported="false" />
   </application>
 </manifest>
