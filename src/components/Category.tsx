@@ -9,9 +9,9 @@ interface Props {
   category: CategoryType;
   onRemoveCategory: (categoryId: string) => void;
   onUpdateCategory: (categoryId: string, name: string) => void;
-  onAddTodo: (categoryId: string, title: string, timeLeft: number) => void;
+  onAddTodo: (categoryId: string, title: string, timeLeft: number, isRoutine: boolean, routineType?: 'daily' | 'weekly' | 'monthly', routineConfig?: { days?: number[], date?: number }) => void;
   onRemoveTodo: (categoryId: string, todoId: string) => void;
-  onUpdateTodo: (categoryId: string, todoId: string, title?: string, timeLeft?: number) => void;
+  onUpdateTodo: (categoryId: string, todoId: string, title?: string, timeLeft?: number, isRoutine?: boolean, routineType?: 'daily' | 'weekly' | 'monthly', routineConfig?: { days?: number[], date?: number }) => void;
   onToggleTodoCompleted: (categoryId: string, todoId: string) => void;
   onRemoveCompletedTodos: (categoryId: string) => void;
 }
@@ -54,6 +54,10 @@ export default function Category({
     setEditName(category.name);
     setIsEditing(false);
   };
+
+  // 루틴과 일반 할 일을 분리
+  const routineTodos = category.todos.filter(todo => todo.isRoutine);
+  const regularTodos = category.todos.filter(todo => !todo.isRoutine);
 
   return (
     <View style={styles.container}>
@@ -106,21 +110,51 @@ export default function Category({
       {isExpanded && (
         <View style={styles.content}>
           <AddTodo 
-            onAddTodo={(title, timeLeft) => onAddTodo(category.id, title, timeLeft)}
+            onAddTodo={(title, timeLeft, isRoutine, routineType, routineConfig) => 
+              onAddTodo(category.id, title, timeLeft, isRoutine, routineType, routineConfig)
+            }
           />
           
           {category.todos.length === 0 ? (
             <Text style={styles.emptyText}>아직 할 일이 없습니다.</Text>
           ) : (
-            category.todos.map((todo) => (
-              <Todo
-                key={todo.id}
-                todo={todo}
-                onRemove={() => onRemoveTodo(category.id, todo.id)}
-                onUpdate={(title, timeLeft) => onUpdateTodo(category.id, todo.id, title, timeLeft)}
-                onToggleCompleted={() => onToggleTodoCompleted(category.id, todo.id)}
-              />
-            ))
+            <>
+              {/* 루틴 할 일들 */}
+              {routineTodos.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>🔄 루틴 업무</Text>
+                  {routineTodos.map((todo) => (
+                    <Todo
+                      key={todo.id}
+                      todo={todo}
+                      onRemove={() => onRemoveTodo(category.id, todo.id)}
+                      onUpdate={(title, timeLeft, isRoutine, routineType, routineConfig) => 
+                        onUpdateTodo(category.id, todo.id, title, timeLeft, isRoutine, routineType, routineConfig)
+                      }
+                      onToggleCompleted={() => onToggleTodoCompleted(category.id, todo.id)}
+                    />
+                  ))}
+                </View>
+              )}
+              
+              {/* 일반 할 일들 */}
+              {regularTodos.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>📝 일반 업무</Text>
+                  {regularTodos.map((todo) => (
+                    <Todo
+                      key={todo.id}
+                      todo={todo}
+                      onRemove={() => onRemoveTodo(category.id, todo.id)}
+                      onUpdate={(title, timeLeft, isRoutine, routineType, routineConfig) => 
+                        onUpdateTodo(category.id, todo.id, title, timeLeft, isRoutine, routineType, routineConfig)
+                      }
+                      onToggleCompleted={() => onToggleTodoCompleted(category.id, todo.id)}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
           )}
         </View>
       )}
@@ -236,6 +270,15 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',

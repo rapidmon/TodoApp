@@ -31,9 +31,19 @@ export default function HomeScreen() {
               category={category}
               onRemoveCategory={(categoryId) => dispatch({ type: 'REMOVE_CATEGORY', payload: { categoryId } })}
               onUpdateCategory={(categoryId, name) => dispatch({ type: 'UPDATE_CATEGORY', payload: { categoryId, name } })}
-              onAddTodo={(categoryId, title, timeLeft) => dispatch({ type: 'ADD_TODO', payload: { categoryId, title, timeLeft } })}
+              onAddTodo={(categoryId, title, timeLeft, isRoutine, routineType, routineConfig) => 
+                dispatch({ 
+                  type: 'ADD_TODO', 
+                  payload: { categoryId, title, timeLeft, isRoutine, routineType, routineConfig } 
+                })
+              }
               onRemoveTodo={(categoryId, todoId) => dispatch({ type: 'REMOVE_TODO', payload: { categoryId, todoId } })}
-              onUpdateTodo={(categoryId, todoId, title, timeLeft) => dispatch({ type: 'UPDATE_TODO', payload: { categoryId, todoId, title, timeLeft } })}
+              onUpdateTodo={(categoryId, todoId, title, timeLeft, isRoutine, routineType, routineConfig) => 
+                dispatch({ 
+                  type: 'UPDATE_TODO', 
+                  payload: { categoryId, todoId, title, timeLeft, isRoutine, routineType, routineConfig } 
+                })
+              }
               onToggleTodoCompleted={(categoryId, todoId) => dispatch({ type: 'TOGGLE_TODO_COMPLETED', payload: { categoryId, todoId } })}
               onRemoveCompletedTodos={(categoryId) => dispatch({ type: 'REMOVE_COMPLETED_TODOS', payload: { categoryId } })}
             />

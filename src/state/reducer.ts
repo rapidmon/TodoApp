@@ -8,6 +8,53 @@ export interface State {
 
 export const initialState: State = { categories: [] };
 
+// 다음 루틴 날짜 계산 함수
+const calculateNextRoutineDate = (routineType: 'daily' | 'weekly' | 'monthly', routineConfig: { days?: number[], date?: number }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (routineType === 'daily') {
+        return 1; // 내일
+    } else if (routineType === 'weekly' && routineConfig.days) {
+        const todayDay = today.getDay();
+        const sortedDays = routineConfig.days.sort((a, b) => a - b);
+        
+        // 오늘 이후의 가장 가까운 요일 찾기
+        let nextDay = sortedDays.find(day => day > todayDay);
+        if (!nextDay) {
+            nextDay = sortedDays[0]; // 다음 주의 첫 번째 요일
+        }
+        
+        const daysUntilNext = nextDay > todayDay ? 
+            nextDay - todayDay : 
+            7 - todayDay + nextDay;
+        
+        return daysUntilNext;
+    } else if (routineType === 'monthly' && routineConfig.date) {
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const currentDate = today.getDate();
+        
+        let nextMonth = currentMonth;
+        let nextYear = currentYear;
+        
+        // 이번 달의 해당 날짜가 지났으면 다음 달로
+        if (currentDate >= routineConfig.date) {
+            nextMonth += 1;
+            if (nextMonth > 11) {
+                nextMonth = 0;
+                nextYear += 1;
+            }
+        }
+        
+        const nextDate = new Date(nextYear, nextMonth, routineConfig.date);
+        const timeDiff = nextDate.getTime() - today.getTime();
+        return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    }
+    
+    return 0;
+};
+
 export function reducer(state: State, action: Action): State {
     switch (action.type) {
         case 'ADD_CATEGORY': {
@@ -45,7 +92,10 @@ export function reducer(state: State, action: Action): State {
                             id: Date.now().toString(),
                             title: action.payload.title,
                             timeLeft: action.payload.timeLeft,
-                            completed: false, // 기본값은 미완료
+                            completed: false,
+                            isRoutine: action.payload.isRoutine,
+                            routineType: action.payload.routineType,
+                            routineConfig: action.payload.routineConfig,
                         } as Todo,
                         ],
                     }
@@ -72,7 +122,14 @@ export function reducer(state: State, action: Action): State {
                         ...c,
                         todos: c.todos.map(t =>
                         t.id === action.payload.todoId
-                            ? { ...t, ...action.payload }
+                            ? { 
+                                ...t, 
+                                title: action.payload.title !== undefined ? action.payload.title : t.title,
+                                timeLeft: action.payload.timeLeft !== undefined ? action.payload.timeLeft : t.timeLeft,
+                                isRoutine: action.payload.isRoutine !== undefined ? action.payload.isRoutine : t.isRoutine,
+                                routineType: action.payload.routineType !== undefined ? action.payload.routineType : t.routineType,
+                                routineConfig: action.payload.routineConfig !== undefined ? action.payload.routineConfig : t.routineConfig,
+                            }
                             : t
                         ),
                     }
@@ -87,11 +144,25 @@ export function reducer(state: State, action: Action): State {
                 c.id === action.payload.categoryId
                     ? {
                         ...c,
-                        todos: c.todos.map(t =>
-                        t.id === action.payload.todoId
-                            ? { ...t, completed: !t.completed }
-                            : t
-                        ),
+                        todos: c.todos.map(t => {
+                            if (t.id === action.payload.todoId) {
+                                const newCompleted = !t.completed;
+                                
+                                // 루틴이고 완료 상태로 변경되는 경우
+                                if (t.isRoutine && newCompleted && t.routineType && t.routineConfig) {
+                                    const nextTimeLeft = calculateNextRoutineDate(t.routineType, t.routineConfig);
+                                    return {
+                                        ...t,
+                                        completed: false, // 루틴은 완료 상태를 유지하지 않음
+                                        timeLeft: nextTimeLeft,
+                                    };
+                                }
+                                
+                                // 일반 할 일이거나 루틴을 미완료로 변경하는 경우
+                                return { ...t, completed: newCompleted };
+                            }
+                            return t;
+                        }),
                     }
                     : c
                 ),
