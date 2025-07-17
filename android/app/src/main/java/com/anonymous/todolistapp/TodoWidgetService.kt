@@ -205,7 +205,7 @@ class TodoRemoteViewsFactory(
                 timeLeft < 0 -> {
                     paint.color = Color.parseColor("#e0e0e0")
                 }
-                i < minOf(maxOf(timeLeft, 0), MAX_BARS) -> {
+                i < minOf(maxOf(timeLeft + 1, 0), MAX_BARS) -> {
                     paint.color = getBarColor(timeLeft, completed)
                 }
                 else -> {
@@ -249,9 +249,9 @@ class TodoRemoteViewsFactory(
     private fun getSimpleTimeText(timeLeft: Int): String {
         return when {
             timeLeft < 0 -> "${kotlin.math.abs(timeLeft)}일 지남"
-            timeLeft == 0 -> "오늘"
-            timeLeft == 1 -> "내일"
-            else -> "${timeLeft}일 남음"
+            timeLeft == 0 -> "오늘 마감"
+            timeLeft == 1 -> "내일 마감"
+            else -> "${timeLeft}일 뒤 마감"
         }
     }
 }
