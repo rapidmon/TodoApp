@@ -41,13 +41,19 @@ class TodoRemoteViewsFactory(
         for (i in 0 until todos.length()) {
             try {
                 val todo = todos.getJSONObject(i)
-                todoList.add(todo)
+                val isRoutine = todo.optBoolean("isRoutine", false)
+                val completed = todo.optBoolean("completed", false)
+                
+                // 완료된 일반 업무는 위젯에서 제외
+                if (!completed || isRoutine) {
+                    todoList.add(todo)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error parsing todo: ${e.message}")
             }
         }
         
-        Log.d(TAG, "Loaded ${todoList.size} todos")
+        Log.d(TAG, "Loaded ${todoList.size} todos (excluding completed regular todos)")
     }
 
     override fun onDestroy() {
@@ -69,19 +75,20 @@ class TodoRemoteViewsFactory(
             val title = todo.getString("title")
             val timeLeft = todo.getInt("timeLeft")
             val completed = todo.getBoolean("completed")
+            val isRoutine = todo.optBoolean("isRoutine", false)
 
             // 제목 설정
             views.setTextViewText(R.id.todo_title, truncateTitle(title, 20))
             
-            // 시간 텍스트 설정 (간단하게)
+            // 시간 텍스트 설정
             views.setTextViewText(R.id.time_text, getSimpleTimeText(timeLeft))
             
             // 체력바 생성
             val barBitmap = createHealthBarBitmap(timeLeft, completed)
             views.setImageViewBitmap(R.id.health_bar, barBitmap)
             
-            // 완료 상태에 따른 색상 설정
-            if (completed) {
+            // 루틴 업무의 경우 완료 상태에 따른 색상 설정
+            if (isRoutine && completed) {
                 views.setInt(R.id.todo_title, "setTextColor", Color.GRAY)
                 views.setInt(R.id.time_text, "setTextColor", Color.GRAY)
                 views.setTextViewText(R.id.btn_complete, "취소")
@@ -111,10 +118,11 @@ class TodoRemoteViewsFactory(
             deleteIntent.putExtra("category_id", categoryId)
             views.setOnClickFillInIntent(R.id.btn_delete, deleteIntent)
             
-            // 할 일 제목 클릭 시 앱 열기
-            val appIntent = Intent()
-            appIntent.putExtra("todoId", todoId)
-            views.setOnClickFillInIntent(R.id.todo_title, appIntent)
+            // 할 일 제목 클릭 시 앱 열기 인텐트
+            val openAppIntent = Intent()
+            openAppIntent.action = "com.anonymous.todolistapp.ACTION_OPEN_APP"
+            openAppIntent.putExtra("todoId", todoId)
+            views.setOnClickFillInIntent(R.id.todo_title, openAppIntent)
             
         } catch (e: Exception) {
             Log.e(TAG, "Error creating view for position $position: ${e.message}")

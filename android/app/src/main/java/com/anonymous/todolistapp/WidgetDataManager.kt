@@ -34,14 +34,14 @@ class WidgetDataManager(private val reactContext: ReactApplicationContext) : Rea
                 }
             }
             
-            // 마감일 순으로 정렬
-            val sortedTodos = sortTodosByPriority(allTodos)
+            // 위젯에 표시될 할 일 필터링 및 정렬
+            val filteredAndSortedTodos = filterAndSortTodos(allTodos)
             
             // SharedPreferences에 저장
-            saveToSharedPreferences(sortedTodos, todosJson)
+            saveToSharedPreferences(filteredAndSortedTodos, todosJson)
             
             // 위젯 업데이트
-            TodoWidgetProvider.updateWidgetData(reactContext, sortedTodos)
+            TodoWidgetProvider.updateWidgetData(reactContext, filteredAndSortedTodos)
             
             promise.resolve("Widget updated successfully")
         } catch (e: Exception) {
@@ -64,12 +64,19 @@ class WidgetDataManager(private val reactContext: ReactApplicationContext) : Rea
         }
     }
     
-    private fun sortTodosByPriority(todos: JSONArray): JSONArray {
+    private fun filterAndSortTodos(todos: JSONArray): JSONArray {
         val todoList = mutableListOf<JSONObject>()
         
-        // JSONArray를 List로 변환
+        // JSONArray를 List로 변환하면서 필터링
         for (i in 0 until todos.length()) {
-            todoList.add(todos.getJSONObject(i))
+            val todo = todos.getJSONObject(i)
+            val isRoutine = todo.optBoolean("isRoutine", false)
+            val completed = todo.optBoolean("completed", false)
+            
+            // 완료된 일반 업무는 위젯에서 제외, 루틴 업무는 완료 상태와 관계없이 포함
+            if (!completed || isRoutine) {
+                todoList.add(todo)
+            }
         }
         
         // 정렬: 완료되지 않은 할 일 우선, 그 다음 timeLeft 순
@@ -79,6 +86,8 @@ class WidgetDataManager(private val reactContext: ReactApplicationContext) : Rea
                 val completed2 = todo2.getBoolean("completed")
                 val timeLeft1 = todo1.getInt("timeLeft")
                 val timeLeft2 = todo2.getInt("timeLeft")
+                val isRoutine1 = todo1.optBoolean("isRoutine", false)
+                val isRoutine2 = todo2.optBoolean("isRoutine", false)
                 
                 when {
                     // 완료되지 않은 할 일이 우선
@@ -92,7 +101,7 @@ class WidgetDataManager(private val reactContext: ReactApplicationContext) : Rea
                             else -> timeLeft1.compareTo(timeLeft2) // 시간 순
                         }
                     }
-                    // 둘 다 완료된 경우 timeLeft로 정렬
+                    // 둘 다 완료된 경우 (루틴 업무만 해당) timeLeft로 정렬
                     else -> timeLeft1.compareTo(timeLeft2)
                 }
             } catch (e: Exception) {

@@ -8,18 +8,18 @@ export interface State {
 
 export const initialState: State = { categories: [] };
 
-// 다음 루틴 날짜 계산 함수
+// 다음 루틴 날짜 계산 함수 (완료 시점부터)
 const calculateNextRoutineDate = (routineType: 'daily' | 'weekly' | 'monthly', routineConfig: { days?: number[], date?: number }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     if (routineType === 'daily') {
-        return 1; // 내일
+        return 1; // 완료 시점부터 1일 후 (내일)
     } else if (routineType === 'weekly' && routineConfig.days) {
         const todayDay = today.getDay();
         const sortedDays = routineConfig.days.sort((a, b) => a - b);
         
-        // 오늘 이후의 가장 가까운 요일 찾기
+        // 완료 시점(오늘) 이후의 가장 가까운 요일 찾기
         let nextDay = sortedDays.find(day => day > todayDay);
         if (!nextDay) {
             nextDay = sortedDays[0]; // 다음 주의 첫 번째 요일
@@ -38,7 +38,7 @@ const calculateNextRoutineDate = (routineType: 'daily' | 'weekly' | 'monthly', r
         let nextMonth = currentMonth;
         let nextYear = currentYear;
         
-        // 이번 달의 해당 날짜가 지났으면 다음 달로
+        // 완료 시점(오늘) 이후의 해당 날짜로 설정
         if (currentDate >= routineConfig.date) {
             nextMonth += 1;
             if (nextMonth > 11) {
@@ -52,7 +52,7 @@ const calculateNextRoutineDate = (routineType: 'daily' | 'weekly' | 'monthly', r
         return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
     }
     
-    return 0;
+    return 1; // 기본값
 };
 
 export function reducer(state: State, action: Action): State {

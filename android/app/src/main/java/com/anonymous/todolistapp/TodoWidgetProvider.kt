@@ -21,6 +21,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
         // 버튼 액션들
         private const val ACTION_COMPLETE_TODO = "com.anonymous.todolistapp.ACTION_COMPLETE_TODO"
         private const val ACTION_DELETE_TODO = "com.anonymous.todolistapp.ACTION_DELETE_TODO"
+        private const val ACTION_OPEN_APP = "com.anonymous.todolistapp.ACTION_OPEN_APP"
         private const val EXTRA_TODO_ID = "todo_id"
         private const val EXTRA_CATEGORY_ID = "category_id"
         
@@ -79,7 +80,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
             }
         }
         
-        // 할 일 데이터 로드 (여전히 필요)
+        // 할 일 데이터 로드
         private fun loadTodos(context: Context): JSONArray {
             return try {
                 val prefs = context.getSharedPreferences("TodoWidgetPrefs", Context.MODE_PRIVATE)
@@ -92,20 +93,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
             }
         }
         
-        // 다음 루틴 날짜 계산
+        // 다음 루틴 날짜 계산 (완료 시점부터)
         private fun calculateNextRoutineDate(routineType: String, routineConfig: JSONObject): Int {
-            val today = Calendar.getInstance()
-            today.set(Calendar.HOUR_OF_DAY, 0)
-            today.set(Calendar.MINUTE, 0)
-            today.set(Calendar.SECOND, 0)
-            today.set(Calendar.MILLISECOND, 0)
+            val now = Calendar.getInstance()
+            now.set(Calendar.HOUR_OF_DAY, 0)
+            now.set(Calendar.MINUTE, 0)
+            now.set(Calendar.SECOND, 0)
+            now.set(Calendar.MILLISECOND, 0)
             
             return when (routineType) {
                 "daily" -> 1 // 내일
                 "weekly" -> {
                     val days = routineConfig.optJSONArray("days")
                     if (days != null) {
-                        val todayDay = today.get(Calendar.DAY_OF_WEEK) - 1 // 0=일요일, 1=월요일...
+                        val todayDay = now.get(Calendar.DAY_OF_WEEK) - 1 // 0=일요일, 1=월요일...
                         val selectedDays = mutableListOf<Int>()
                         
                         for (i in 0 until days.length()) {
@@ -114,7 +115,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
                         
                         selectedDays.sort()
                         
-                        // 오늘 이후의 가장 가까운 요일 찾기
+                        // 완료 시점(오늘) 이후의 가장 가까운 요일 찾기
                         var nextDay = selectedDays.find { it > todayDay }
                         if (nextDay == null) {
                             nextDay = selectedDays[0] // 다음 주의 첫 번째 요일
@@ -133,14 +134,14 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 }
                 "monthly" -> {
                     val date = routineConfig.optInt("date", 1)
-                    val currentMonth = today.get(Calendar.MONTH)
-                    val currentYear = today.get(Calendar.YEAR)
-                    val currentDate = today.get(Calendar.DAY_OF_MONTH)
+                    val currentMonth = now.get(Calendar.MONTH)
+                    val currentYear = now.get(Calendar.YEAR)
+                    val currentDate = now.get(Calendar.DAY_OF_MONTH)
                     
                     var nextMonth = currentMonth
                     var nextYear = currentYear
                     
-                    // 이번 달의 해당 날짜가 지났으면 다음 달로
+                    // 완료 시점(오늘) 이후의 해당 날짜로 설정
                     if (currentDate >= date) {
                         nextMonth += 1
                         if (nextMonth > 11) {
@@ -153,10 +154,10 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     nextDate.set(nextYear, nextMonth, date, 0, 0, 0)
                     nextDate.set(Calendar.MILLISECOND, 0)
                     
-                    val timeDiff = nextDate.timeInMillis - today.timeInMillis
+                    val timeDiff = nextDate.timeInMillis - now.timeInMillis
                     Math.ceil(timeDiff / (1000.0 * 60 * 60 * 24)).toInt()
                 }
-                else -> 0
+                else -> 1
             }
         }
     }
@@ -179,6 +180,9 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     handleDeleteTodo(context, categoryId, todoId)
                 }
             }
+            ACTION_OPEN_APP -> {
+                handleOpenApp(context)
+            }
         }
     }
     
@@ -197,7 +201,7 @@ class TodoWidgetProvider : AppWidgetProvider() {
                     val isRoutine = todo.optBoolean("isRoutine", false)
                     
                     if (isRoutine) {
-                        // 루틴 업무인 경우: 다음 루틴 날짜로 업데이트
+                        // 루틴 업무인 경우: 완료 시점부터 다음 루틴 날짜로 업데이트
                         val routineType = todo.optString("routineType", "daily")
                         val routineConfig = todo.optJSONObject("routineConfig") ?: JSONObject()
                         
@@ -206,18 +210,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
                         todo.put("completed", false) // 루틴은 완료 상태를 유지하지 않음
                         
                         Log.d(TAG, "Routine todo updated to next date: $todoId, nextTimeLeft: $nextTimeLeft")
-                    } else {
-                        // 일반 업무인 경우: 완료 상태 토글
-                        val currentCompleted = todo.getBoolean("completed")
-                        todo.put("completed", !currentCompleted)
                         
-                        Log.d(TAG, "Regular todo completed: $todoId, completed: ${!currentCompleted}")
+                        // 위젯 변경사항 기록
+                        recordWidgetChange(context, "TOGGLE_COMPLETED", categoryId, todoId)
+                    } else {
+                        // 일반 업무인 경우: 완료 처리하고 위젯에서 제거
+                        todo.put("completed", true)
+                        
+                        Log.d(TAG, "Regular todo completed: $todoId")
+                        
+                        // 위젯 변경사항 기록
+                        recordWidgetChange(context, "TOGGLE_COMPLETED", categoryId, todoId)
                     }
                     
                     found = true
-                    
-                    // 위젯 변경사항 기록
-                    recordWidgetChange(context, "TOGGLE_COMPLETED", categoryId, todoId)
                     break
                 }
             }
@@ -273,6 +279,20 @@ class TodoWidgetProvider : AppWidgetProvider() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting todo: ${e.message}", e)
+        }
+    }
+    
+    private fun handleOpenApp(context: Context) {
+        try {
+            val packageManager = context.packageManager
+            val intent = packageManager.getLaunchIntentForPackage(context.packageName)
+            intent?.let {
+                it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(it)
+                Log.d(TAG, "App opened from widget")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening app: ${e.message}", e)
         }
     }
     
