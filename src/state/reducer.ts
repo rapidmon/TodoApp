@@ -153,7 +153,7 @@ export function reducer(state: State, action: Action): State {
                                     const nextTimeLeft = calculateNextRoutineDate(t.routineType, t.routineConfig);
                                     return {
                                         ...t,
-                                        completed: false, // 루틴은 완료 상태를 유지하지 않음
+                                        completed: true, // 루틴 완료 시 일시적으로 완료 상태로 표시
                                         timeLeft: nextTimeLeft,
                                     };
                                 }
@@ -173,7 +173,7 @@ export function reducer(state: State, action: Action): State {
                 ...state,
                 categories: state.categories.map(c =>
                 c.id === action.payload.categoryId
-                    ? { ...c, todos: c.todos.filter(t => !t.completed) }
+                    ? { ...c, todos: c.todos.filter(t => !t.completed || t.isRoutine) }
                     : c
                 ),
             };

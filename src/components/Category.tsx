@@ -88,7 +88,7 @@ export default function Category({
           <>
             <Text style={styles.title}>{category.name}</Text>
             <View style={styles.buttonContainer}>
-              {category.todos.some(todo => todo.completed) && (
+              {category.todos.some(todo => todo.completed && !todo.isRoutine) && (
                 <TouchableOpacity 
                   style={styles.clearCompletedButton} 
                   onPress={() => onRemoveCompletedTodos(category.id)}

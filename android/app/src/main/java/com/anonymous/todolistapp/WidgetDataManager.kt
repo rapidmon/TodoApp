@@ -86,8 +86,6 @@ class WidgetDataManager(private val reactContext: ReactApplicationContext) : Rea
                 val completed2 = todo2.getBoolean("completed")
                 val timeLeft1 = todo1.getInt("timeLeft")
                 val timeLeft2 = todo2.getInt("timeLeft")
-                val isRoutine1 = todo1.optBoolean("isRoutine", false)
-                val isRoutine2 = todo2.optBoolean("isRoutine", false)
                 
                 when {
                     // 완료되지 않은 할 일이 우선

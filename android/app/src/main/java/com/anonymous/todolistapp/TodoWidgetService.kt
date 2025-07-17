@@ -87,15 +87,30 @@ class TodoRemoteViewsFactory(
             val barBitmap = createHealthBarBitmap(timeLeft, completed)
             views.setImageViewBitmap(R.id.health_bar, barBitmap)
             
-            // 루틴 업무의 경우 완료 상태에 따른 색상 설정
+            // 루틴 업무의 경우 완료 상태에 따른 색상 및 버튼 설정
             if (isRoutine && completed) {
+                // 루틴 업무 완료 시 회색으로 표시
+                views.setInt(R.id.todo_title, "setTextColor", Color.GRAY)
+                views.setInt(R.id.time_text, "setTextColor", Color.GRAY)
+                views.setTextViewText(R.id.btn_complete, "취소")
+                
+                // 완료 버튼을 회색으로 변경
+                views.setInt(R.id.btn_complete, "setBackgroundResource", R.drawable.completed_button_background)
+                views.setInt(R.id.btn_complete, "setTextColor", Color.WHITE)
+            } else if (completed) {
+                // 일반 업무 완료 시 (실제로는 위젯에서 보이지 않음)
                 views.setInt(R.id.todo_title, "setTextColor", Color.GRAY)
                 views.setInt(R.id.time_text, "setTextColor", Color.GRAY)
                 views.setTextViewText(R.id.btn_complete, "취소")
             } else {
+                // 미완료 상태
                 views.setInt(R.id.todo_title, "setTextColor", Color.BLACK)
                 views.setInt(R.id.time_text, "setTextColor", getTextColor(timeLeft))
                 views.setTextViewText(R.id.btn_complete, "완료")
+                
+                // 완료 버튼을 원래 색상으로 설정
+                views.setInt(R.id.btn_complete, "setBackgroundResource", R.drawable.complete_button_background)
+                views.setInt(R.id.btn_complete, "setTextColor", Color.WHITE)
             }
             
             // 완료 버튼 클릭 인텐트

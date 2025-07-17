@@ -250,6 +250,14 @@ export default function Todo({ todo, onRemove, onUpdate, onToggleCompleted }: Pr
     return title.substring(0, maxLength) + '...';
   };
 
+  // 루틴 완료 상태 텍스트
+  const getCompletionButtonText = () => {
+    if (todo.isRoutine && todo.completed) {
+      return '취소';
+    }
+    return todo.completed ? '취소' : '완료';
+  };
+
   if (isEditing) {
     return (
       <ScrollView style={[styles.container, styles.editingContainer]}>
@@ -379,7 +387,11 @@ export default function Todo({ todo, onRemove, onUpdate, onToggleCompleted }: Pr
     <View style={[styles.container, todo.completed && styles.completedContainer]}>
       <View style={styles.header}>
         <TouchableOpacity 
-          style={[styles.checkbox, todo.completed && styles.checkboxCompleted]}
+          style={[
+            styles.checkbox, 
+            todo.completed && styles.checkboxCompleted,
+            todo.isRoutine && todo.completed && styles.checkboxRoutineCompleted
+          ]}
           onPress={onToggleCompleted}
         >
           {todo.completed && (
@@ -388,11 +400,21 @@ export default function Todo({ todo, onRemove, onUpdate, onToggleCompleted }: Pr
         </TouchableOpacity>
         
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, todo.completed && styles.completedTitle]}>
+          <Text style={[
+            styles.title, 
+            todo.completed && styles.completedTitle,
+            todo.isRoutine && todo.completed && styles.routineCompletedTitle
+          ]}>
             {truncateTitle(todo.title)}
           </Text>
           {todo.isRoutine && (
-            <Text style={styles.routineText}>🔄 {getRoutineText()}</Text>
+            <Text style={[
+              styles.routineText,
+              todo.completed && styles.routineCompletedText
+            ]}>
+              🔄 {getRoutineText()}
+              {todo.completed && ' (완료됨)'}
+            </Text>
           )}
         </View>
         
@@ -453,6 +475,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#388e3c',
     borderColor: '#388e3c',
   },
+  checkboxRoutineCompleted: {
+    backgroundColor: '#CCCCCC',
+    borderColor: '#CCCCCC',
+  },
   checkmark: {
     color: '#fff',
     fontSize: 14,
@@ -470,10 +496,16 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     color: '#888',
   },
+  routineCompletedTitle: {
+    color: '#666',
+  },
   routineText: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+  },
+  routineCompletedText: {
+    color: '#999',
   },
   buttonContainer: {
     flexDirection: 'row',

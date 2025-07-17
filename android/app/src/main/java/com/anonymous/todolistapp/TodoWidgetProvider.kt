@@ -199,17 +199,24 @@ class TodoWidgetProvider : AppWidgetProvider() {
                 val todo = todos.getJSONObject(i)
                 if (todo.getString("id") == todoId) {
                     val isRoutine = todo.optBoolean("isRoutine", false)
+                    val currentCompleted = todo.optBoolean("completed", false)
                     
                     if (isRoutine) {
-                        // 루틴 업무인 경우: 완료 시점부터 다음 루틴 날짜로 업데이트
-                        val routineType = todo.optString("routineType", "daily")
-                        val routineConfig = todo.optJSONObject("routineConfig") ?: JSONObject()
-                        
-                        val nextTimeLeft = calculateNextRoutineDate(routineType, routineConfig)
-                        todo.put("timeLeft", nextTimeLeft)
-                        todo.put("completed", false) // 루틴은 완료 상태를 유지하지 않음
-                        
-                        Log.d(TAG, "Routine todo updated to next date: $todoId, nextTimeLeft: $nextTimeLeft")
+                        if (currentCompleted) {
+                            // 루틴 업무가 이미 완료된 경우 - 미완료로 되돌리기
+                            todo.put("completed", false)
+                            Log.d(TAG, "Routine todo uncompleted: $todoId")
+                        } else {
+                            // 루틴 업무 완료 처리
+                            val routineType = todo.optString("routineType", "daily")
+                            val routineConfig = todo.optJSONObject("routineConfig") ?: JSONObject()
+                            
+                            val nextTimeLeft = calculateNextRoutineDate(routineType, routineConfig)
+                            todo.put("timeLeft", nextTimeLeft)
+                            todo.put("completed", true) // 루틴 완료 시 일시적으로 완료 상태로 표시
+                            
+                            Log.d(TAG, "Routine todo completed: $todoId, nextTimeLeft: $nextTimeLeft")
+                        }
                         
                         // 위젯 변경사항 기록
                         recordWidgetChange(context, "TOGGLE_COMPLETED", categoryId, todoId)
