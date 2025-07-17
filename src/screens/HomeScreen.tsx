@@ -1,15 +1,53 @@
 // src/screens/HomeScreen.tsx
-import React, { useReducer } from 'react';
-import { View, StyleSheet, ScrollView, Text } from 'react-native';
+import React, { useReducer, useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { reducer, initialState } from '../state/reducer';
 import { useWidgetUpdate } from '../hooks/useWidgetUpdate';
+import { saveState, loadState } from '../utils/storage';
 import AddCategory from '../components/AddCategory';
 import Category from '../components/Category';
 
 export default function HomeScreen() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [isLoading, setIsLoading] = useState(true);
+  
   useWidgetUpdate(state, dispatch);
+
+  // 앱 시작 시 저장된 데이터 불러오기
+  useEffect(() => {
+    const loadStoredData = async () => {
+      try {
+        const savedState = await loadState();
+        if (savedState) {
+          // 저장된 데이터가 있으면 복원
+          dispatch({ type: 'RESTORE_STATE', payload: savedState });
+        }
+      } catch (error) {
+        console.error('Error loading stored data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStoredData();
+  }, []);
+
+  // 상태 변경 시마다 자동으로 저장
+  useEffect(() => {
+    if (!isLoading) {
+      saveState(state);
+    }
+  }, [state, isLoading]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>할 일 목록을 불러오는 중...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -86,5 +124,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
   },
 });

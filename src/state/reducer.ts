@@ -1,10 +1,6 @@
 // src/state/reducer.ts
-import { Category, Todo } from '../types';
+import { Category, Todo, State } from '../types';
 import { Action } from './actions';
-
-export interface State {
-    categories: Category[];
-}
 
 export const initialState: State = { categories: [] };
 
@@ -177,6 +173,9 @@ export function reducer(state: State, action: Action): State {
                     : c
                 ),
             };
+        }
+        case 'RESTORE_STATE': {
+            return action.payload;
         }
         default:
         return state;

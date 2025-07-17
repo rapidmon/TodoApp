@@ -1,5 +1,6 @@
-
 // src/state/actions.ts
+import { State } from "../types";
+
 export type Action =
   | { type: 'ADD_CATEGORY'; payload: { name: string } }
   | { type: 'REMOVE_CATEGORY'; payload: { categoryId: string } }
@@ -23,4 +24,5 @@ export type Action =
       routineConfig?: { days?: number[], date?: number } 
     } }
   | { type: 'TOGGLE_TODO_COMPLETED'; payload: { categoryId: string; todoId: string } }
-  | { type: 'REMOVE_COMPLETED_TODOS'; payload: { categoryId: string } };
+  | { type: 'REMOVE_COMPLETED_TODOS'; payload: { categoryId: string } }
+  | { type: 'RESTORE_STATE'; payload: State };

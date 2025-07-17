@@ -1,7 +1,7 @@
 // src/hooks/useWidgetUpdate.ts
 import { useEffect } from 'react';
 import { NativeModules, Platform, AppState, AppStateStatus } from 'react-native';
-import { State } from '../state/reducer';
+import { State } from '../types';
 import { Action } from '../state/actions';
 
 const { WidgetDataManager } = NativeModules;

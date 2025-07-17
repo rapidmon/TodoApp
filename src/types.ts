@@ -17,3 +17,7 @@ export interface Category {
     name: string;
     todos: Todo[];
 }
+
+export interface State {
+    categories: Category[];
+}
