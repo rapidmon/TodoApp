@@ -111,7 +111,7 @@ export function reducer(state: State, action: Action): State {
                                 
                                 // 루틴이고 완료 상태로 변경되는 경우
                                 if (t.isRoutine && newCompleted && t.routineType && t.routineConfig) {
-                                    const nextTimeLeft = calculateNextRoutineDate(t.routineType, t.routineConfig);
+                                    const nextTimeLeft = getNextRoutineDate(t.routineType, t.routineConfig);
                                     return {
                                         ...t,
                                         completed: true, // 루틴 완료 시 일시적으로 완료 상태로 표시

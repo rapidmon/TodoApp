@@ -3,6 +3,7 @@ export interface Todo {
     id: string;
     title: string;
     timeLeft: number;
+    dueDate: string;
     completed: boolean;
     isRoutine: boolean;
     routineType?: 'daily' | 'weekly' | 'monthly';

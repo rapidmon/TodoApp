@@ -19,11 +19,7 @@ export const getNextRoutineDate = (type: 'daily' | 'weekly' | 'monthly', config:
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    if (type === 'daily') {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        return tomorrow;
-    } else if (type === 'weekly' && config.days) {
+    if (type === 'weekly' && config.days) {
         const todayDay = today.getDay();
         const sortedDays = config.days.sort((a, b) => a - b);
         
